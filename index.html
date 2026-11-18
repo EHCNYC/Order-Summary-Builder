@@ -425,7 +425,7 @@ const CONFIG = {
   ],
   requestedVia: ['Refill Form', 'Website', 'Phone', 'Text', 'Email'],
   pharmacies: ['Hallandale Pharmacy', 'Strive Pharmacy', 'Vios Compounding Pharmacy', 'The Chemist Shop', 'Wells Pharmacy', 'Striker Pharmacy'],
-  shippingMethods: ['FedEx', 'UPS cold-pack', 'FedEx cold-pack', 'USPS', 'Local courier'],
+  shippingMethods: ['FedEx', 'UPS cold-pack', 'FedEx cold-pack', 'USPS'],
   signatureTypes: ['No signature', 'Direct signature', 'Indirect signature'],
   // fields a new product copies from the product above it
   inheritFields: ['orderDate', 'status', 'processing', 'clearedUntil', 'shipMethod'],
@@ -750,18 +750,13 @@ document.addEventListener('keydown', e => {
   if (open) { closeMenus(); $('.multi-btn', open).focus(); }
 });
 
-// Set the shipping default from the selected pharmacy and product.
+// Wellness products ship by USPS; other Strive orders default to UPS cold-pack.
 function syncPharmacyShipping(node) {
   const product = PRODUCTS[$('[data-f=med]', node).value];
-  const pharmacy = $('[data-f=pharmacy]', node).value;
-  if (pharmacy === 'The Chemist Shop') {
-    $('[data-f=shipMethod]', node).value = 'Local courier';
-  } else if (product && product.group === 'Wellness & Vitality Collection') {
+  if (product && product.group === 'Wellness & Vitality Collection') {
     $('[data-f=shipMethod]', node).value = 'USPS';
-  } else if (pharmacy === 'Strive Pharmacy') {
+  } else if ($('[data-f=pharmacy]', node).value === 'Strive Pharmacy') {
     $('[data-f=shipMethod]', node).value = 'UPS cold-pack';
-  } else if ($('[data-f=shipMethod]', node).value === 'Local courier') {
-    $('[data-f=shipMethod]', node).value = 'FedEx';
   }
 }
 
@@ -1062,7 +1057,7 @@ ${miniLabel('Shipping')}
 ${kvPanel([
   ['Pharmacy', it.pharmacy],
   ['Shipping method', it.shipMethod],
-  ['Tracking your order', it.shipMethod === 'Local courier' ? '' : `<span style="font-weight:400;color:${C.muted};">A ${carrier} tracking # will be emailed and/or texted to you once fulfillment has completed.</span>`, true]
+  ['Tracking your order', `<span style="font-weight:400;color:${C.muted};">A ${carrier} tracking # will be emailed and/or texted to you once fulfillment has completed.</span>`, true]
 ])}`;
 }
 
