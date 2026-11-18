@@ -398,7 +398,23 @@ const CONFIG = {
       { name: 'Bioboost Plus', form: 'Injectable', tag: FRIDGE, programs: [
         { label: '10mL', pharmacy: 'Hallandale Pharmacy' },
         { label: '30mL', pharmacy: 'Hallandale Pharmacy' }] },
-      { name: 'MICB12', form: 'Gel Troches', programs: ['30 troches'] }
+      { name: 'MICB12', form: 'Gel Troches', programs: ['30 troches'] },
+      // Catalog additions: programs, pricing, pharmacy and storage remain unconfirmed.
+      { name: 'BPC-157', form: 'Injectable', forms: ['Injectable', 'Capsules'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'CJC-1295 + Ipamorelin', form: 'Injectable', forms: ['Injectable'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'Ipamorelin', form: 'Lyophilized', forms: ['Lyophilized'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'Kisspeptin', form: 'Injectable', forms: ['Injectable'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'Methylene Blue', form: 'Capsules', forms: ['Capsules'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'MK-677 (Ibutamoren)', form: 'Capsules', forms: ['Capsules'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'PT-141 (Bremelanotide)', form: 'Injectable', forms: ['Injectable', 'Nasal Spray', 'Mini Troche'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'TB-500', form: 'Injectable', forms: ['Injectable'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'Tesamorelin', form: 'Injectable', forms: ['Injectable'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'Thymosin Alpha-1', form: 'Injectable', forms: ['Injectable'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'Wolverine: BPC-157 & TB-500', form: 'Injectable', forms: ['Injectable'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'Epitalon', form: 'Injectable', forms: ['Injectable'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'KPV', form: 'Injectable', forms: ['Injectable'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'Mots-c', form: 'Injectable', forms: ['Injectable'], storageUnknown: true, programs: ['TBA'] },
+      { name: 'Semax', form: 'Injectable', forms: ['Injectable'], storageUnknown: true, programs: ['TBA'] }
     ]},
     { group: 'Wellness & Vitality Collection', pharmacy: 'Strive Pharmacy', items: [
       { name: 'Fuel+', form: 'Meal Replacement', programs: ['30 servings'] },
@@ -425,7 +441,7 @@ const CONFIG = {
   ],
   requestedVia: ['Refill Form', 'Website', 'Phone', 'Text', 'Email'],
   pharmacies: ['Hallandale Pharmacy', 'Strive Pharmacy', 'Vios Compounding Pharmacy', 'The Chemist Shop', 'Wells Pharmacy', 'Striker Pharmacy'],
-  shippingMethods: ['FedEx', 'UPS cold-pack', 'FedEx cold-pack', 'USPS'],
+  shippingMethods: ['FedEx', 'UPS cold-pack', 'FedEx cold-pack', 'USPS', 'Local courier'],
   signatureTypes: ['No signature', 'Direct signature', 'Indirect signature'],
   // fields a new product copies from the product above it
   inheritFields: ['orderDate', 'status', 'processing', 'clearedUntil', 'shipMethod'],
@@ -750,13 +766,18 @@ document.addEventListener('keydown', e => {
   if (open) { closeMenus(); $('.multi-btn', open).focus(); }
 });
 
-// Wellness products ship by USPS; other Strive orders default to UPS cold-pack.
+// Set the shipping default from the selected pharmacy and product.
 function syncPharmacyShipping(node) {
   const product = PRODUCTS[$('[data-f=med]', node).value];
-  if (product && product.group === 'Wellness & Vitality Collection') {
+  const pharmacy = $('[data-f=pharmacy]', node).value;
+  if (pharmacy === 'The Chemist Shop') {
+    $('[data-f=shipMethod]', node).value = 'Local courier';
+  } else if (product && product.group === 'Wellness & Vitality Collection') {
     $('[data-f=shipMethod]', node).value = 'USPS';
-  } else if ($('[data-f=pharmacy]', node).value === 'Strive Pharmacy') {
+  } else if (pharmacy === 'Strive Pharmacy') {
     $('[data-f=shipMethod]', node).value = 'UPS cold-pack';
+  } else if ($('[data-f=shipMethod]', node).value === 'Local courier') {
+    $('[data-f=shipMethod]', node).value = 'FedEx';
   }
 }
 
@@ -769,6 +790,8 @@ function syncProduct(node) {
   }
   $('[data-f=weeksPerMl]', node).value = '';
   $('[data-f=total]', node).value = '';
+  $('[data-f=total]', node).placeholder = p && p.storageUnknown ? 'TBA' : '0.00';
+  fillSelect($('[data-f=type]', node), p && p.forms ? p.forms : CONFIG.forms, 'Select');
   if (p) {
     fillSelect(prog, p.programs.map(x => x.label), p.programs.length > 1 ? 'Select' : undefined);
     prog.disabled = false;
@@ -893,7 +916,7 @@ function readState() {
     const p = PRODUCTS[o.med];
     o.name = p ? p.name : '';
     o.group = p ? p.group : '';
-    o.tag = (p && p.tag) || (o.type === 'Injectable' ? FRIDGE : '');   // all injectables must be refrigerated
+    o.tag = (p && p.tag) || (p && !p.storageUnknown && o.type === 'Injectable' ? FRIDGE : '');
     return o;
   }).filter(o => o.name);
   s.signatureFee = calcSignatureFee(s.items, s.signature);
@@ -1057,7 +1080,7 @@ ${miniLabel('Shipping')}
 ${kvPanel([
   ['Pharmacy', it.pharmacy],
   ['Shipping method', it.shipMethod],
-  ['Tracking your order', `<span style="font-weight:400;color:${C.muted};">A ${carrier} tracking # will be emailed and/or texted to you once fulfillment has completed.</span>`, true]
+  ['Tracking your order', it.shipMethod === 'Local courier' ? '' : `<span style="font-weight:400;color:${C.muted};">A ${carrier} tracking # will be emailed and/or texted to you once fulfillment has completed.</span>`, true]
 ])}`;
 }
 
