@@ -990,7 +990,7 @@ function stat(label, value, highlight = false) {
 
 function noteLine(label, text, alert = false) {
   return text
-    ? `<tr><td style="padding:0 16px 10px;font-family:${F};font-size:13px;line-height:19px;color:${alert ? C.danger : C.muted};"><span style="font-weight:700;color:${C.navy};">${esc(label)}:</span> ${esc(text)}</td></tr>`
+    ? `<tr><td style="padding:0 16px 10px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td style="background-color:#fff8d9;border:1px solid #eddda3;border-radius:10px;padding:9px 10px;font-family:${F};font-size:13px;line-height:19px;color:${alert ? C.danger : C.muted};"><span style="font-weight:700;color:${C.navy};">${esc(label)}:</span> ${esc(text)}</td></tr></table></td></tr>`
     : '';
 }
 
