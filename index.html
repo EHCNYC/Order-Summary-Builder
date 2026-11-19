@@ -567,16 +567,9 @@ function setValues(node, data) {
 }
 
 const OWED_MEDICATION_DEFAULT = 'Please contact us at least 7 days prior to your last injection.';
-// Only add or remove the default in response to a deliberate selection change.
-function syncOwed(node, updateComment = false) {
-  const hasOwedMedication = $('[data-f=medOwed]', node).value === 'Yes';
-  $('.owed-field', node).hidden = !hasOwedMedication;
-  if (updateComment) {
-    const comments = $('[data-f=comments]', node);
-    if (hasOwedMedication && !comments.value.trim()) comments.value = OWED_MEDICATION_DEFAULT;
-    if (!hasOwedMedication && comments.value.trim() === OWED_MEDICATION_DEFAULT) comments.value = '';
-    syncOrderStatus(node);
-  }
+// The owed-medication detail is conditional; comments are independent of this choice.
+function syncOwed(node) {
+  $('.owed-field', node).hidden = $('[data-f=medOwed]', node).value !== 'Yes';
 }
 
 function addItem(data = {}) {
@@ -592,6 +585,7 @@ function addItem(data = {}) {
   fillSelect($('[data-f=shipMethod]', node), CONFIG.shippingMethods);
   $('[data-f=orderDate]', node).value = todayISO();
   $('[data-f=processing]', node).value = CONFIG.processingTime;
+  $('[data-f=comments]', node).value = OWED_MEDICATION_DEFAULT;
 
   if (data.med) $('[data-f=med]', node).value = data.med;
   syncProduct(node);
@@ -991,7 +985,7 @@ function stat(label, value, highlight = false) {
   const background = highlight ? '#fff8d9' : C.stat;
   const border = highlight ? '#eddda3' : C.line;
   return `<td width="33%" valign="top" style="background-color:${background};border:1px solid ${border};border-radius:10px;padding:9px 10px;">
-<div style="font-family:${F};font-size:11px;line-height:14px;font-weight:${highlight ? 700 : 600};color:${C.muted};">${esc(label)}</div>
+<div style="font-family:${F};font-size:11px;line-height:14px;font-weight:${highlight ? 700 : 600};color:${highlight ? '#000000' : C.muted};">${esc(label)}</div>
 <div style="font-family:${F};font-size:14px;line-height:20px;font-weight:700;color:${C.ink};padding-top:2px;">${esc(value || '-')}</div>
 </td>`;
 }
@@ -1033,7 +1027,7 @@ function itemCard(it) {
     it.type ? pill(esc(it.type), '#e9f0f3', C.navy, '#d3e0e5') : '',
     it.tag ? pill(`&#10052; ${esc(it.tag)}`, C.pill, C.accentDark, '#cde8f0') : ''
   ].join('');
-  const notes = noteLine(it.medOwed === 'Yes' ? 'To receive your owed medication' : 'Comments', it.comments, it.status === HOLD_STATUS);
+  const notes = noteLine('To receive your owed medication', it.comments, it.status === HOLD_STATUS);
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;background-color:#ffffff;border:1px solid ${C.line};border-left:4px solid ${C.blue};border-radius:14px;margin:0 0 10px 0;box-shadow:0 6px 18px rgba(9,46,57,0.06);">
 <tr><td style="padding:14px 16px 6px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
@@ -1478,7 +1472,7 @@ formCol.addEventListener('change', e => {
   if (e.target.dataset.f === 'program') syncProgram(node);
   if (e.target.dataset.f === 'pharmacy') syncPharmacyShipping(node);
   if (e.target.dataset.f === 'type') { syncType(node); syncProgram(node, false); }
-  if (e.target.dataset.f === 'medOwed') syncOwed(node, true);
+  if (e.target.dataset.f === 'medOwed') syncOwed(node);
   if (e.target.dataset.f === 'status' || e.target.dataset.f === 'comments') syncOrderStatus(node);
   const multi = e.target.closest('.multi');
   if (multi) syncMulti(multi);
