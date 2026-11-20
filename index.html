@@ -173,6 +173,14 @@ button{font:inherit}
 .link-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) auto;gap:12px;align-items:end;margin-top:16px}
 .link-row .icon-btn{margin-bottom:3px}
 @media (max-width:640px){.link-row{grid-template-columns:1fr}}
+.link-url-control{position:relative;display:flex;align-items:center}
+.field .link-url-control input{padding-right:52px}
+.link-visibility{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:38px;height:36px;border:0;border-radius:9px;background:transparent;color:var(--accent);cursor:pointer}
+.link-visibility:hover{background:rgba(139,203,221,.2)}
+.link-visibility[aria-pressed="false"]{color:var(--muted)}
+.link-visibility .eye-off{display:none}
+.link-visibility[aria-pressed="false"] .eye-off{display:block}
+.link-hidden-note{font-size:12px;color:var(--muted);margin:6px 3px 0}
 </style>
 </head>
 <body>
@@ -224,13 +232,19 @@ button{font:inherit}
 
     <div class="card glass">
       <div class="card-head"><h2>Links</h2></div>
-      <div class="grid">
+      <p class="help" style="margin:0 0 14px">Use the eye to show or hide each button in the email. The link stays here for later.</p>
+      <div class="grid" id="linkGrid">
         <div class="field span-3"><label>Request a Refill</label><input data-k="refillUrl" type="url" data-default="refillUrl" placeholder="https://"></div>
         <div class="field span-3"><label>View your dose in # of units here!</label><input data-k="doseUrl" type="url" data-default="doseGuideUrl" placeholder="https://">
           <p class="help">Leave blank to hide this button.</p></div>
         <div class="field span-3"><label>How to Inject (Step by Step)</label><input data-k="injectionUrl" type="url" data-default="injectionGuideUrl" placeholder="https://"></div>
         <div class="field span-3"><label>Dosing Conversion</label><input data-k="dosingUrl" type="url" data-default="dosingConversionUrl" placeholder="https://"></div>
         <div class="field span-3"><label># Of Weeks For Treatment (Weight Loss Meds.)</label><input data-k="weeksUrl" type="url" data-default="weeksOfTreatmentUrl" placeholder="https://"></div>
+        <div class="field span-3"><label>Tirzepatide/Glycine/B12 Patient Guide</label><input data-k="tirzGlyGuideUrl" type="url" data-default="tirzGlyGuideUrl" placeholder="https://"></div>
+        <div class="field span-3"><label>Semaglutide/Glycine/B12 Patient Guide</label><input data-k="semaGlyGuideUrl" type="url" data-default="semaGlyGuideUrl" placeholder="https://"></div>
+        <div class="field span-3"><label>Semaglutide Flex-Dose Patient Guide</label><input data-k="semaFlexGuideUrl" type="url" data-default="semaFlexGuideUrl" placeholder="https://"></div>
+        <div class="field span-3"><label>Tirzepatide Flex-Dose Patient Guide</label><input data-k="tirzFlexGuideUrl" type="url" data-default="tirzFlexGuideUrl" placeholder="https://"></div>
+        <div class="field span-3"><label>Sermorelin Patient Guide</label><input data-k="sermorelinGuideUrl" type="url" data-default="sermorelinGuideUrl" placeholder="https://"></div>
       </div>
       <div id="extraLinks"></div>
       <button type="button" class="btn btn-add" id="addLink" style="margin-top:16px">
@@ -359,6 +373,11 @@ const CONFIG = {
   injectionGuideUrl: 'https://drive.google.com/file/d/1nzs1cHDSPBIJfhMJLHbhCyjDbXiUL9Lw/view',
   dosingConversionUrl: 'https://canva.link/8qqqc9xz5ayqxl9',
   weeksOfTreatmentUrl: 'https://canva.link/number-of-weeks-of-treatment',
+  tirzGlyGuideUrl: 'https://canva.link/tirzepatide-glycine-b12-guide',
+  semaGlyGuideUrl: 'https://canva.link/semaglutide-glycine-b12-guide',
+  semaFlexGuideUrl: 'https://canva.link/semaglutide-flex-dose-guide',
+  tirzFlexGuideUrl: 'https://canva.link/tirzepatide-flex-dose-guide',
+  sermorelinGuideUrl: 'https://canva.link/ehcnyc-sermorelin',
   processingTime: 'Up to 10 business days',
   catalog: [
     { group: 'Weight loss', items: [
@@ -513,10 +532,56 @@ function fillSelect(sel, list, ph) {
 }
 
 /* ---------- extra links ---------- */
+const DEFAULT_LINKS = [
+  ['refillUrl', 'Request a Refill'],
+  ['doseUrl', 'View your dose in # of units here!'],
+  ['injectionUrl', 'How to Inject (Step by Step)'],
+  ['dosingUrl', 'Dosing Conversion'],
+  ['weeksUrl', '# Of Weeks For Treatment (Weight Loss Meds.)'],
+  ['tirzGlyGuideUrl', 'Tirzepatide/Glycine/B12 Patient Guide'],
+  ['semaGlyGuideUrl', 'Semaglutide/Glycine/B12 Patient Guide'],
+  ['semaFlexGuideUrl', 'Semaglutide Flex-Dose Patient Guide'],
+  ['tirzFlexGuideUrl', 'Tirzepatide Flex-Dose Patient Guide'],
+  ['sermorelinGuideUrl', 'Sermorelin Patient Guide']
+];
+function setLinkVisibility(toggle, visible) {
+  toggle.setAttribute('aria-pressed', String(visible));
+  const label = toggle.dataset.linkLabel || 'custom link';
+  toggle.setAttribute('aria-label', `${visible ? 'Hide' : 'Show'} ${label} in email`);
+  toggle.title = visible ? 'Hide from email' : 'Show in email';
+  toggle.closest('.field').querySelector('.link-hidden-note').hidden = visible;
+}
+function addLinkVisibility(input, label) {
+  if (!input || input.closest('.link-url-control')) return;
+  const control = document.createElement('div');
+  control.className = 'link-url-control';
+  input.before(control);
+  control.appendChild(input);
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'link-visibility';
+  toggle.dataset.linkLabel = label;
+  toggle.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="eye-off" d="M4 4l16 16"/></svg>';
+  control.appendChild(toggle);
+  const note = document.createElement('p');
+  note.className = 'link-hidden-note';
+  note.textContent = 'Hidden from email';
+  control.after(note);
+  setLinkVisibility(toggle, true);
+  toggle.addEventListener('click', () => {
+    setLinkVisibility(toggle, toggle.getAttribute('aria-pressed') !== 'true');
+    render();
+  });
+}
+function linkIsVisible(input) {
+  const toggle = input && input.closest('.link-url-control')?.querySelector('.link-visibility');
+  return !toggle || toggle.getAttribute('aria-pressed') === 'true';
+}
 function addLink(data = {}) {
   const node = $('#linkTpl').content.firstElementChild.cloneNode(true);
   if (data.text) $('[data-l=text]', node).value = data.text;
   if (data.url) $('[data-l=url]', node).value = data.url;
+  addLinkVisibility($('[data-l=url]', node), 'custom link');
   $('#extraLinks').appendChild(node);
   return node;
 }
@@ -533,6 +598,7 @@ function applyDefaults() {
   $$('[data-k]').forEach(el => { el.value = ''; });
   $$('select[data-opts]').forEach(sel => fillSelect(sel, CONFIG[sel.dataset.opts], sel.dataset.ph));
   $$('[data-default]').forEach(el => { el.value = CONFIG[el.dataset.default] || ''; });
+  $$('.link-visibility').forEach(toggle => setLinkVisibility(toggle, true));
   $$('.field.invalid').forEach(f => f.classList.remove('invalid'));
   $('#extraLinks').innerHTML = '';
   const via = $('#viaMulti');
@@ -909,7 +975,9 @@ function readState() {
   const s = {};
   $$('[data-k]').forEach(el => { s[el.dataset.k] = el.value.trim(); });
   s.via = $$('#viaMulti input:checked').map(c => c.value).join(', ');
-  s.links = $$('#extraLinks .link-row').map(r => ({
+  s.defaultLinks = DEFAULT_LINKS.filter(([key]) => linkIsVisible($(`[data-k="${key}"]`)))
+    .map(([key, text]) => [s[key], text]);
+  s.links = $$('#extraLinks .link-row').filter(r => linkIsVisible($('[data-l=url]', r))).map(r => ({
     text: $('[data-l=text]', r).value.trim(),
     url: $('[data-l=url]', r).value.trim()
   })).filter(l => l.text && safeUrl(l.url));
@@ -1182,11 +1250,7 @@ function buildEmailBody(s) {
 
   // buttons alternate: filled, outlined, filled, outlined... (skipping any left blank)
   const buttons = [
-    [s.refillUrl, 'Request a Refill'],
-    [s.doseUrl, 'View your dose in # of units here!'],
-    [s.injectionUrl, 'How to Inject (Step by Step)'],
-    [s.dosingUrl, 'Dosing Conversion'],
-    [s.weeksUrl, '# Of Weeks For Treatment (Weight Loss Meds.)'],
+    ...s.defaultLinks,
     ...s.links.map(l => [l.url, l.text])
   ].filter(([url]) => safeUrl(url))
    .map(([url, text], i) => button(url, text, i % 2 === 0))
@@ -1319,6 +1383,7 @@ function validate() {
   missingHoldComments().forEach(({ input, label }) => flag(input, label));
   $$('#extraLinks .link-row').forEach(r => {
     const t = $('[data-l=text]', r), u = $('[data-l=url]', r);
+    if (!linkIsVisible(u)) return;
     if (!t.value.trim() && !u.value.trim()) return;
     if (!t.value.trim()) flag(t, 'button text for each extra link');
     if (!safeUrl(u.value.trim())) flag(u, 'full https link for each extra button');
@@ -1481,6 +1546,7 @@ formCol.addEventListener('change', e => {
 
 /* ---------- init ---------- */
 $('.brand-logo').src = CONFIG.logoData;
+DEFAULT_LINKS.forEach(([key, label]) => addLinkVisibility($(`[data-k="${key}"]`), label));
 applyDefaults();
 addItem();
 </script>
