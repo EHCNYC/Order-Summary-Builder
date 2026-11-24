@@ -414,7 +414,7 @@ const CONFIG = {
         { label: '5mL (10mg/mL)', pharmacy: 'Striker Pharmacy' }] },
       { name: 'Glow: GHK-Cu, BPC-157 & TB-500', form: 'Injectable', tag: FRIDGE, programs: [
         { label: '3mL (9mg/1.66mg/3.33mg/mL)', pharmacy: 'Striker Pharmacy' }] },
-      { name: 'Bioboost Plus', form: 'Injectable', tag: FRIDGE, programs: [
+      { name: 'Bioboost Plus', form: 'Injectable', tag: 'Store in a cool, dry place away from heat & moisture.', programs: [
         { label: '10mL', pharmacy: 'Hallandale Pharmacy' },
         { label: '30mL', pharmacy: 'Hallandale Pharmacy' }] },
       { name: 'MICB12', form: 'Gel Troches', programs: ['30 troches'] },
@@ -1093,7 +1093,7 @@ function itemCard(it) {
   });
   const pills = [
     it.type ? pill(esc(it.type), '#e9f0f3', C.navy, '#d3e0e5') : '',
-    it.tag ? pill(`&#10052; ${esc(it.tag)}`, C.pill, C.accentDark, '#cde8f0') : ''
+    it.tag ? pill(`${it.tag === FRIDGE ? '&#10052; ' : ''}${esc(it.tag)}`, C.pill, C.accentDark, '#cde8f0') : ''
   ].join('');
   const notes = noteLine('To receive your owed medication', it.comments, it.status === HOLD_STATUS);
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;background-color:#ffffff;border:1px solid ${C.line};border-left:4px solid ${C.blue};border-radius:14px;margin:0 0 10px 0;box-shadow:0 6px 18px rgba(9,46,57,0.06);">
