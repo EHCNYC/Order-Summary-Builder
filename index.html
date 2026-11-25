@@ -167,6 +167,7 @@ button{font:inherit}
 .multi-menu[hidden]{display:none}
 .field .multi-opt{display:flex;align-items:center;gap:10px;margin:0;padding:9px 10px;border-radius:9px;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
 .field .multi-opt:hover{background:rgba(139,203,221,.25)}
+.field .multi-opt.via-owed span{color:#fff0b0;background:#574710;padding:2px 7px;border-radius:6px}
 .field .multi-opt input{width:17px;height:17px;flex:none;margin:0;padding:0;border:0;background:none;box-shadow:none;accent-color:var(--navy);cursor:pointer}
 /* delivery dates */
 /* extra links */
@@ -458,7 +459,7 @@ const CONFIG = {
     { label: 'Processing', bg: '#e1f2f7', fg: '#1f7489' },
     { label: HOLD_STATUS, bg: '#fdf1dc', fg: '#c62828' }
   ],
-  requestedVia: ['Refill Form', 'Website', 'Phone', 'Text', 'Email'],
+  requestedVia: ['Refill Form', 'Website', 'Owed Medication', 'Phone', 'Text', 'Email'],
   pharmacies: ['Hallandale Pharmacy', 'Strive Pharmacy', 'Vios Compounding Pharmacy', 'The Chemist Shop', 'Wells Pharmacy', 'Striker Pharmacy'],
   shippingMethods: ['FedEx', 'UPS cold-pack', 'FedEx cold-pack', 'USPS', 'Local courier'],
   signatureTypes: ['No signature', 'Direct signature', 'Indirect signature'],
@@ -603,7 +604,7 @@ function applyDefaults() {
   $('#extraLinks').innerHTML = '';
   const via = $('#viaMulti');
   $('.multi-menu', via).innerHTML = CONFIG.requestedVia.map(v =>
-    `<label class="multi-opt"><input type="checkbox" value="${esc(v)}"><span>${esc(v)}</span></label>`).join('');
+    `<label class="multi-opt${v === 'Owed Medication' ? ' via-owed' : ''}"><input type="checkbox" value="${esc(v)}"><span>${esc(v)}</span></label>`).join('');
   syncMulti(via);
 }
 
