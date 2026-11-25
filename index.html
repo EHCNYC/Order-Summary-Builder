@@ -1220,6 +1220,13 @@ ${line(a('https://' + S.website, S.website, true))}
 </td></tr>`;
 }
 
+function renderOrderSource(value) {
+  if (!value) return '';
+  return value.split(', ').map(source => source === 'Owed Medication'
+    ? `<span style="background-color:#fff1b3;color:#493800;padding:3px 7px;border-radius:5px;font-weight:700;">${esc(source)}</span>`
+    : esc(source)).join(', ');
+}
+
 function buildEmailBody(s) {
   const n = s.items.length;
   const lead = s.items[0] || {};
@@ -1228,7 +1235,7 @@ function buildEmailBody(s) {
 
   const patient = kvPanel([
     ['Name', s.name],
-    ['Order requested via', s.via],
+    ['Order requested via', renderOrderSource(s.via), true],
     ['Shipping address', s.address ? nl2br(s.address) : '', true],
     ['Signature at delivery', s.signature],
     ['Instructions for courier', s.courier || 'n/a'],
